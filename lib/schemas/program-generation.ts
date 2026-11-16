@@ -77,6 +77,27 @@ export function extractJsonObject(text: string): string | null {
 
 export type ParseResult = { ok: true; program: GeneratedProgram } | { ok: false; error: string };
 
+// Models regularly emit rest values outside the schema window (0 or 10 for
+// stretching and warm-up entries, 900 for long rests), which would reject an
+// otherwise usable program. Clamp them to the nearest allowed bound.
+function normalizeRestSec(raw: unknown): void {
+  if (!raw || typeof raw !== 'object') return;
+  const workouts = (raw as { workouts?: unknown }).workouts;
+  if (!Array.isArray(workouts)) return;
+  for (const workout of workouts) {
+    if (!workout || typeof workout !== 'object') continue;
+    const exercises = (workout as { exercises?: unknown }).exercises;
+    if (!Array.isArray(exercises)) continue;
+    for (const exercise of exercises) {
+      if (!exercise || typeof exercise !== 'object') continue;
+      const e = exercise as { restSec?: unknown };
+      if (typeof e.restSec === 'number' && Number.isFinite(e.restSec)) {
+        e.restSec = Math.min(600, Math.max(15, Math.round(e.restSec)));
+      }
+    }
+  }
+}
+
 // Extracts, parses and validates a generated program from raw model text.
 export function parseGeneratedProgram(text: string): ParseResult {
   const json = extractJsonObject(text);
@@ -92,6 +113,7 @@ export function parseGeneratedProgram(text: string): ParseResult {
       error: `Invalid JSON: ${err instanceof Error ? err.message : 'parse error'}`,
     };
   }
+  normalizeRestSec(raw);
   const result = generatedProgramSchema.safeParse(raw);
   if (!result.success) {
     return {

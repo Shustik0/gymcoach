@@ -86,6 +86,20 @@ describe('parseGeneratedProgram', () => {
     expect(parseGeneratedProgram(JSON.stringify(bad)).ok).toBe(false);
   });
 
+  it('clamps restSec into the allowed window instead of rejecting', () => {
+    const low = structuredClone(validProgram);
+    low.workouts[0]!.exercises[0]!.restSec = 0;
+    const lowResult = parseGeneratedProgram(JSON.stringify(low));
+    expect(lowResult.ok).toBe(true);
+    if (lowResult.ok) expect(lowResult.program.workouts[0]!.exercises[0]!.restSec).toBe(15);
+
+    const high = structuredClone(validProgram);
+    high.workouts[0]!.exercises[0]!.restSec = 900;
+    const highResult = parseGeneratedProgram(JSON.stringify(high));
+    expect(highResult.ok).toBe(true);
+    if (highResult.ok) expect(highResult.program.workouts[0]!.exercises[0]!.restSec).toBe(600);
+  });
+
   it('rejects autoregulation coefficients outside their safe bounds', () => {
     const bad = structuredClone(validProgram);
     bad.workouts[0]!.exercises[0]!.fatigueRate = 3;

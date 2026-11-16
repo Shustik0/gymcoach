@@ -49,6 +49,8 @@ Guidelines:
 - 4 to 10 exercises per workout, ordered compounds first.
 - Evidence-based volume and intensity for the stated goal.
 - Use whole, gym-realistic numbers. targetRepsMax must be >= targetRepsMin.
+- restSec is the rest in seconds and must always be an integer from 15 to 600,
+  including warm-up, stretching and cardio entries. Never output 0, 10 or 900.
 - Conditioning work (running, cycling, rowing, walking, elliptical...) uses
   category CARDIO and equipmentType CARDIO. It is logged as duration and
   distance, not as weight and reps: one continuous effort is ONE set
